@@ -2,6 +2,110 @@
 	<head>
 	</head>
 	<body>
-		Project 1 here
+		<h1> Overview </h1>
+		<p> In this project, we built a basic virtual drawing machine that accomplishes features like rasterizing, texture mapping, and linear transforms based on the contents of SVG files. It's one thing to have learned these topics in theory through the classroom, but implementing them helps gain an appreciation the nitty gritty aspect such as keeping track of indices, algorithmic complexity, and so forth. </p>
+
+		<h1> Task 1 </h1>
+
+		<p>
+		We rasterize triangles by doing a point-in-triangle test to see if a certain pixel on our display is inside the triangle. To avoid checking all pixels on the display, we only check pixels that are within the x and y coordinate extrema of the triangle vertices, which is essentially the tightest bounding box.
+		</p>
+
+		<img src="img/t1.png" align="middle" width="400px"/>
+
+		<h1> Task 2 </h1>
+
+		<p>
+		Our supersampling algorithm involves uniformly sampling each display pixel at different points in the continuous world and then averaging the colors. To achieve this, if our display has dimension m by n, instead of sampling m by n times, we sample sqrt(sampling rate) * m by sqrt(sampling rate) * n times, taking the average over each sqrt(sampling rate) x sqrt(sampling rate) square and mapping it to one of the display pixels. We store two buffers: one sampling buffer to hold all the samples and one display buffer to hold the pixel values. We first fill the sample buffer by sampling all the points, then we resolve to the framebuffer at the end. Supersampling is useful because it increases our sample rate so we are able to capture higher frequency signals.
+		</p>
+
+		<img src="img/t2_1.png" align="middle" width="400px"/>
+		<img src="img/t2_4.png" align="middle" width="400px"/>
+		<img src="img/t2_16.png" align="middle" width="400px"/>
+
+		As our sampling rate increases, we are better able to antialias by capturing high frequency signals like the edge of this triangle.
+
+		<h1> Task 3 </h1>
+
+		<p>
+		We changed the rendered colors of the upper leg, torso, and head component, and added a rotate to the left arm transform so that the robot is waving. </p>
+
+		<img src="img/t3.png" align="middle" width="400px"/>
+
+		<h1> Task 4 </h1>
+
+		<img src="img/t4_exp.png" align="middle" width="400px"/>
+
+		<p>
+		Barycentric coordinates can be viewed as a weighted average of vertex points. Since triangles are convex hulls of 3 points, any linear combination of those three points with coefficients non-negative and summing to one describe some point along the boundary or interior of the triangle. </p>
+
+		<img src="img/t4.png" align="middle" width="400px"/>
+
+		<h1> Task 5 </h1>
+
+		<p>
+		Pixel sampling is how we sample the color of one pixel of a display by mapping from a point in another image. We implemented pixel sampling in two ways. Nearest neighbour sampling finds the closest pixel in the image we are sampling from, while bilinear sampling completes a linear interpolation over the 4 nearest pixels in the image we are sampling from.
+		</p>
+
+		<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="img/t5_1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Nearest neighbour pixel sampling, sample rate 1.</figcaption>
+      </td>
+      <td>
+        <img src="img/t5_2.png" align="middle" width="400px"/>
+        <figcaption align="middle">Nearest neighbour pixel sampling, sample rate 16.</figcaption>
+      </td>
+    </tr>
+    <br>
+    <tr>
+      <td>
+        <img src="img/t5_3.png" align="middle" width="400px"/>
+        <figcaption align="middle">Bilinear pixel sampling, sample rate 1.</figcaption>
+      </td>
+      <td>
+        <img src="img/t5_4.png" align="middle" width="400px"/>
+        <figcaption align="middle">Bilinear pixel sampling, sample rate 16.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+	<p> As we expect, the best antialiasing occurs with bilinear pixel sampling at sample rate 16. This difference is quite noticeable due to the high frequency signals we notice. The higher the frequency of signals, the more antialising will be noticeable. The two methods will perform differently if the texture map is quite distorted, when simply supersampling (at a low rate) will not save you from antialiasing (as is the case with the horizon grid). </p>
+
+	<h1> Task 6 </h1>
+
+	<p> Level sampling is sampling different pixels from variably downsampled images of the same representation. We implement this by mapping each pixel and it's neighbours to the texture map to find the rate at which the texture sample changes (this determines the signal frequency at a certain point). Based on this rate, we choose an appropriately downsampled representation of the image (lower rate of change means more downsampled to avoid artifacts and vice versa higher rate of change means we are sampling a more frequent signal so we have to increase our sample rate. </p>
+
+	<p> Supersampling increases memory usage by a factor of our sampling rate because it requires us to store more samples. Likewise it increases time complexity by the same factor for the same reason (we have to collect more samples). Pixel sampling with bilinear sampling increases time complexity by a factor of roughly 4 over nearest neighbour, and doesn't really affect memory complexity. Level sampling increases memory usage by a factor of 4/3 over not using level sampling. Linear level sampling increases time complexity by a factor of roughly 2 over nearest neighbour level sampling. Supersampling antialiases by increasing sample rate, bilinear pixel sampling antialiases by filtering our high frequency signals, and linear level sampling combines both by using linear interpolation to filter our high-frequency signals and increasing the same rate.  </p>
+
+	<table style="width=100%">
+    <tr>
+      <td>
+        <img src="img/t6_1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level zero, nearest neighbour</figcaption>
+      </td>
+      <td>
+        <img src="img/t6_2.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level zero, bilinear</figcaption>
+      </td>
+    </tr>
+    <br>
+    <tr>
+      <td>
+        <img src="img/t6_3.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level one, nearest neighbour</figcaption>
+      </td>
+      <td>
+        <img src="img/t6_4.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level one, bilinear</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p> Link to webpage: https://cal-cs184-student.github.io/sp22-project-webpages-Aekus/ </p>
+
 	</body>
 </html>
