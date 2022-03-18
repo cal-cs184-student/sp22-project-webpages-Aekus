@@ -2,6 +2,247 @@
 	<head>
 	</head>
 	<body>
-		Project 3-1 here
+		<h1> Overview </h1>
+		<p> In this project, we implemented ray tracing and illumination. We began by first implementing naive ray tracing, then we used BVH trees to accelerate our collision search. Once the mechanics of ray intersections was met, we implemented direct illumination, allowing us to sample from a light source directly. We augmented this by implementing one bounce illumination, allowing us to sample the light bouncing off a diffuse object. We followed this by implementing global illumination, allowing our camera to pick up on light bounced off many objects. This was much more computationally difficult, so we used a russian roulette random termination criteria. Finally, we realized that some points in a rendering change very little depending on how the light intersects them (walls for instance), so we used adaptive sampling to further improve performance.
+
+		<h1> Part 1 </h1>
+
+		<p>
+    To generate random rays, for each pixel (x,y) we uniformly sample n points from the unit square between (x,y) and (x+1, y+1). For each such point, we convert its coordinates in object space to some coordinates in world space and trace a ray from the camera's position in world space through that point. We then sample the colour from the intersection of this ray and the scene. We monte carlo integrate for the colour over each unit square, updating the pixel value at that point.
+		</p>
+		<p>
+		The triangle intersection algorithm I implemented is exactly the Moller-Trumbore algorithm. This algorithm computes a barycentric representation for the intersection of a ray with a triangle, solving for the intersection point O + tD = A + u(B - A) + v(C - A). This turns out to be much more computationally efficient than reconstructing the plane and determining if the intersecting point lies in the plane.
+		</p>
+
+		<div align="middle">
+		<img src="img/p1empty.png" align="middle" width="480px"/>
+		<img src="img/p1spheres.png" align="middle" width="480px"/>
+	</div>
+
+		<h1> Part 2 </h1>
+
+		<p>
+    The BVH is recursively constructed. Initiatially, all objects are initialized in one node. We set the bounding box of the node by taking the union of the bounds of all the objects. Then, if the number of objects is greater than max_leaf_size, we take the longest axis of the bounding box, and divide it in the middle. All objects that have a centre to the left of the midpoint are placed in a left node and all objects that have a centre to the right of the split are placed in a right node. To avoid the edge case where all objects are placed in one node and none in the other, we create two candidate splits where objects with center exactly at the midpoint are placed in either our left or right node, and we select the split that has non-zero number of entries in both nodes. Then, we recursively compute the left and right nodes, resplitting them as necessary until we arrive at a leaf node, where we stop splitting any further and initialize an iterator to all the object elements.
+		</p>
+
+		<p> Here are the outputs to two large files using the BVH tree </p>
+
+    <div align="middle">
+		<img src="img/p2maxplanck.png" align="middle" width="480px"/>
+		<img src="img/p2lucy.png" align="middle" width="480px"/>
+	</div>
+
+		<p>
+		We compared the runtimes for CBbunny and CBcoil, two moderately large files with and without the BVH tree. CBbunny took 74.73 seconds without the BVH tree and CBcoil took 14.26 seconds without the BVH tree. With the tree, the times for both were 0.0406s and 0.0374s respectively, representing an improvement of 1841x and 381x respectively.
+	 </p>
+
+	 <h1> Part 3 </h1>
+
+   <p>
+	 Uniform hemisphere sampling involves sampling the input ray to an intersection (wi) uniformly over every possible ray in the hemisphere centered at the normal of the surface. To do this, for every sampled in raytrace_pixel, we check the intersection of the ray with the scene. If the intersection happens between the near and far plane, we sample wi as described above and construct a ray with origin at the intersection point and direction wi. Then, we intersect this ray with the scene and sample the emission from the second intersection point (non-zero only if this point is a light). We compute the average via monte carlo integration. </p>
+
+	 <p>
+	 Importance sampling differs in that our samples direction is uniformly chosen over the area of the light. For each light, we sample some number of rays intersecting with the light and sample the light's emission at that point. Like above, we then compute the monte carlo integral to find the average emission. </p>
+
+	 <p> Here are some comparison images to show the difference between uniform and importance sampling with 8 samples per light and 16 samples per pixel. </p>
+
+ <div align="middle">
+ <table style="width=100%">
+	 <tr>
+		 <td>
+			 <img src="img/bunny_h.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> bunny with uniform hemisphere sampling </figcaption>
+		 </td>
+		 <td>
+			 <img src="img/bunny_i.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> bunny with importance sampling </figcaption>
+		 </td>
+	 </tr>
+	 <br>
+	 <tr>
+		 <td>
+			 <img src="img/spheres_h.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> spheres with uniform hemisphere sampling </figcaption>
+		 </td>
+		 <td>
+			 <img src="img/spheres_i.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> spheres with importance sampling </figcaption>
+		 </td>
+	 </tr>
+	 <tr>
+		 <td>
+			 <img src="img/lucy_h.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> CBLucy with uniform hemisphere sampling </figcaption>
+		 </td>
+		 <td>
+			 <img src="img/lucy_i.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> CBLucy with importance sampling. </figcaption>
+		 </td>
+	 </tr>
+ </table>
+</div>
+ <p> Now, with just one pixel per sample, we see how the number of samples per light affect quality. </p>
+ <div align="middle">
+ <table style="width=100%">
+	 <tr>
+		 <td>
+			 <img src="img/bunny_1_1.png" align="middle" width="400px"/>
+			 <figcaption align="middle">1 sample per light.</figcaption>
+		 </td>
+		 <td>
+			 <img src="img/bunny_1_4.png" align="middle" width="400px"/>
+			 <figcaption align="middle">4 samples per light.</figcaption>
+		 </td>
+	 </tr>
+	 <br>
+	 <tr>
+		 <td>
+			 <img src="img/bunny_1_16.png" align="middle" width="400px"/>
+			 <figcaption align="middle">16 samples per light.</figcaption>
+		 </td>
+		 <td>
+			 <img src="img/bunny_1_64.png" align="middle" width="400px"/>
+			 <figcaption align="middle">64 samples per light.</figcaption>
+		 </td>
+	 </tr>
+ </table>
+</div>
+ <p> Clearly, as the number of times we sample increases, the noise decreases. This is mathematically true since variance of an average decreases as the sample size increases, but intuitively this also makes sense since with very few samples, we may be sampling parts of the light where our cosine angle is very large or very small. Likewise, if the light is partially obscured at a point, we may be sampling a ray that intersects another object before the light. </p>
+
+<h1> Part 4 </h1>
+<p> For indirect illumination, like direct illumation, we generate a ray from the origin point of the original ray's intersection with the scene in a direction wi. This time, however, instead of returning the emission at this new ray's intersection with the scene, we return the emission from the next intersection point. The emission from the next intersection point is the sum of the direct illumination from light sources and the recursively computed indirect illumination from that point. In essence, our indirect illumination is then the illumination from light that takes at least two bounces. </p>
+
+<div align="middle">
+<table style="width=100%">
+	<tr>
+		<td>
+			<img src="img/spheres_1024_1.png" align="middle" width="400px"/>
+			<figcaption align="middle">Global illumination l=1, s=1024, m=5</figcaption>
+		</td>
+		<td>
+			<img src="img/bunny_1024_1.png" align="middle" width="400px"/>
+			<figcaption align="middle">Global illumination l=1, s=1024, m=5</figcaption>
+		</td>
+	</tr>
+</table>
+</div>
+
+<p> Now, we see how indirect illumination changed the scene from Part 3, where we just had direct illumination. Recall that global illumination = direct + indirect</p>
+
+<div align="middle">
+<table style="width=100%">
+	<tr>
+		<td>
+			<img src="img/spheres_1024_1_direct.png" align="middle" width="400px"/>
+			<figcaption align="middle">Direct illumination l=1, s=1024, m=5.</figcaption>
+		</td>
+		<td>
+			<img src="img/spheres_1024_1_indirect.png" align="middle" width="400px"/>
+			<figcaption align="middle">Indirect illumination l=1, s=1024, m=5.</figcaption>
+		</td>
+	</tr>
+</table>
+</div>
+
+<p> Now, we compare different values of the maximal depth amounts. Note that due to how illumination geometrically decays as a function of the number of bounces  (as well as russian roulette), the improvements in increasing depth become more marginal.  </p>
+
+<div align="middle">
+<table style="width=100%">
+	<tr>
+		<td>
+			<img src="img/bunny_1024_1_0.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=1, s=1024, m=0.</figcaption>
+		</td>
+		<td>
+			<img src="img/bunny_1024_1_1.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=1, s=1024, m=1.</figcaption>
+		</td>
+	</tr>
+	<br>
+	<tr>
+		<td>
+			<img src="img/bunny_1024_1_2.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=1, s=1024, m=2.</figcaption>
+		</td>
+		<td>
+			<img src="img/bunny_1024_1_3.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=1, s=1024, m=3.</figcaption>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<img src="img/bunny_1024_1_100.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=1, s=1024, m=100.</figcaption>
+		</td>
+	</tr>
+</table>
+</div>
+<p>
+We now compare, keeping ray depth constant, how the number of samples per pixel affects quality.
+</p>
+<table style="width=100%">
+	<tr>
+		<td>
+			<img src="img/bunny_1_4_5.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=4, s=1, m=5.</figcaption>
+		</td>
+		<td>
+			<img src="img/bunny_2_4_5.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=4, s=2, m=5.</figcaption>
+		</td>
+	</tr>
+	<br>
+	<tr>
+		<td>
+			<img src="img/bunny_4_4_5.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=4, s=4, m=5.</figcaption>
+		</td>
+		<td>
+			<img src="img/bunny_8_4_5.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=4, s=8, m=5.</figcaption>
+		</td>
+	</tr>
+	<br>
+	<tr>
+		<td>
+			<img src="img/bunny_16_4_5.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=4, s=16, m=5.</figcaption>
+		</td>
+		<td>
+			<img src="img/bunny_64_4_5.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=4, s=64, m=5.</figcaption>
+		</td>
+	</tr>
+	<br>
+	<tr>
+		<td>
+			<img src="img/bunny_1024_4_5.png" align="middle" width="400px"/>
+			<figcaption align="middle">l=4, s=1024, m=5.</figcaption>
+		</td>
+	</tr>
+</table>
+<h1> Part 5 </h1>
+
+<p> Adaptive sampling is done by maintaining a estimate of n * E(X) and n * E(X^2) where X is a random variable representing the pixel values and is estimated by random sampling. This is done for every pixel and at after every a samples are drawn, we check if the variance is sufficiently low. If this is the case, we can confidently say we have an accurate measure of what the pixel value is and the noise will be small so there we can save computation by not continuing to sample. We then compute a monte carlo integral over the pixel unit square and return the value. </p>
+
+<p> As we see, adaptive sampling allows simpler objects like walls to be rendered with fewer samples than the more complicated rabbit. This makes intuitive sense, since walls are largely flat so the signal for illumination is lower frequency versus the rabbit, where the surface has higher curvature and thus the illumination between nearby points is more variable. This can be thought of as a lighting equivalent of level sampling. </p>
+
+<div align="middle">
+<table style="width=100%">
+	<tr>
+		<td>
+			<img src="img/bunny_2048_1_5_005.png" align="middle" width="400px"/>
+			<figcaption align="middle">Direct illumination l=1, s=2048, m=5, a=(32, 0.05)</figcaption>
+		</td>
+		<td>
+			<img src="img/bunny_2048_1_5_005_rate.png" align="middle" width="400px"/>
+			<figcaption align="middle">Direct illumination l=1, s=2048, m=5, a=(32, 0.05) rate</figcaption>
+		</td>
+	</tr>
+</table>
+</div>
+
+<p> Link to webpage: https://cal-cs184-student.github.io/sp22-project-webpages-Aekus/ </p>
+
 	</body>
 </html>
