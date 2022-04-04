@@ -2,6 +2,114 @@
 	<head>
 	</head>
 	<body>
-		Project 3-2 here
+		<h1> Overview </h1>
+		<p> In this project, we implemented some additional pathtracing tools that allow us to create realistic depictions of scenes. First, we implement light models for glass materials. This is done by combining mirror models (perfect specular reflection) with specular refraction (light that passes through glass). Then, we explore a thin lens camera model. A thin lens model takes into account the aperture of the lens and focal distance to give a more realistic camera effect and allow us to play with depth of field.
+
+		<h1> Part 1 </h1>
+    <p>
+		The way we implement the glass model is by using the Schick's reflection coefficient as an approximation for the ratio of light that is reflected versus refracted. Then, we sample this Bernoulli distribution with each ray that intersects the glass to either calculate the light arriving from perfect specular reflection, or specular refraction. The refracted light ray is calculated using Snell's law and the index of refraction of the material, while angle of reflected light is mirrored by the normal vector of the surface.
+	  </p>
+
+		<div align="middle">
+		<table style="width=100%">
+			<tr>
+				<td>
+					<img src="img/CBspheres_0.png" align="middle" width="400px"/>
+					<figcaption align="middle"> 0 bounces of light, only direct light. </figcaption>
+				</td>
+				<td>
+					<img src="img/CBspheres_1.png" align="middle" width="400px"/>
+					<figcaption align="middle"> One bounce, only reflection of light source on spheres. </figcaption>
+				</td>
+			</tr>
+			<br>
+			<tr>
+				<td>
+					<img src="img/CBspheres_2.png" align="middle" width="400px"/>
+					<figcaption align="middle">  Two bounces, mirror ball shows reflection of the one bounce scene, faint refraction detected in the second ball. With two bounces being used for light entering and leaving the sphere, only direct lighting can be detected in refraction. </figcaption>
+				</td>
+				<td>
+					<img src="img/CBspheres_3.png" align="middle" width="400px"/>
+					<figcaption align="middle"> 3 bounces. Mirror ball shows reflection of two bounce scene. With 3 bounces, (two of which are used for light entering and leaving the sphere), indirect lighting is refracted by the front sphere. Additionally, light from the source is concentrated in the shadow due to snell's window. </figcaption>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<img src="img/CBspheres_4.png" align="middle" width="400px"/>
+					<figcaption align="middle"> 4 bounces. Refraction is a little brighter due to more indirect lighting being picked up. Now, the reflection in the mirror sphere picks up the refraction in the glass sphere. The concentrated light source on the ground is now also reflecting on the blue wall. </figcaption>
+				</td>
+				<td>
+					<img src="img/CBspheres_5.png" align="middle" width="400px"/>
+					<figcaption align="middle"> 5 bounces. Largely unchanged from before. Scene is a little brighter overall. </figcaption>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<img src="img/CBspheres_100.png" align="middle" width="400px"/>
+					<figcaption align="middle"> 100 bounces. As above, scene is a little brighter. </figcaption>
+				</td>
+			</tr>
+		</table>
+	 </div>
+
+	 <h1> Part 4 </h1>
+	 A pinhole camera simply assumes that all light rays from a scene onto a screen pass through a single point. The thin-lens model generalizes the pinhole model to a disk. For any pair of points on the screen and focal distance plane that are intersected by a ray that passes through the pinhole, any other ray from the scene that intersects the disk will also be refracted to the same point in the scene. This is due to a convex lens designed for a specific focal distance. Given a point on the screen, we can implement this by finding a ray that passes through the pinhole camera located at the center of the disk and find where it intersects the focal plane. Then, we sample a point on the disk and generate a ray from that point to the point on the focal plane.
+
+	 <div align="middle">
+	 <table style="width=100%">
+		 <tr>
+			 <td>
+				 <img src="img/CBdragon_d4.png" align="middle" width="400px"/>
+				 <figcaption align="middle"> focal distance = 4. None of the dragon is in focus </figcaption>
+			 </td>
+			 <td>
+				 <img src="img/CBdragon_d43.png" align="middle" width="400px"/>
+				 <figcaption align="middle"> focal distance = 4.3. The front of the dragon is nearly in focus </figcaption>
+			 </td>
+		 </tr>
+		 <br>
+		 <tr>
+			 <td>
+				 <img src="img/CBdragon_d46.png" align="middle" width="400px"/>
+				 <figcaption align="middle"> focal distance = 4.6. The middle of the dragon is in focus </figcaption>
+			 </td>
+			 <td>
+				 <img src="img/CBdragon_d5.png" align="middle" width="400px"/>
+				 <figcaption align="middle"> focal distance = 5.0. The tail of the dragon is in focus. </figcaption>
+			 </td>
+		 </tr>
+	 </table>
+	</div>
+	<p>
+	As expected, higher focal distance results in further parts of the scene coming into focus.
+ </p>
+ <div align="middle">
+ <table style="width=100%">
+	 <tr>
+		 <td>
+			 <img src="img/CBdragon_b01.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> Aperture size = 0.1. Most of the scene is in focus. </figcaption>
+		 </td>
+		 <td>
+			 <img src="img/CBdragon_b04.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> Aperture size = 0.4. The front and middle of the dragon are in focus. You can still make out the shape of the rest of the dragon. The front of the light is in focus as well. </figcaption>
+		 </td>
+	 </tr>
+	 <br>
+	 <tr>
+		 <td>
+			 <img src="img/CBdragon_b08.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> Aperture size = 0.8. The mouth, neck, and front leg of the dragon are in focus. The shape of the dragon is difficult to make out  </figcaption>
+		 </td>
+		 <td>
+			 <img src="img/CBdragon_b14.png" align="middle" width="400px"/>
+			 <figcaption align="middle"> Aperture size = 1.4. The tip of the mouth and the front leg of the dragon are in focus. The rest of the dragon is very difficult to make out. </figcaption>
+		 </td>
+	 </tr>
+ </table>
+</div>
+At aperture size = 0, the camera acts like a pinhole. As we increase the aperture size, the angles of rays that are refracted by our lens increase, meaning that the rays diverge from the focal plane more. This results in a small field of focus.
+
+https://cal-cs184-student.github.io/sp22-project-webpages-Aekus/
 	</body>
 </html>
